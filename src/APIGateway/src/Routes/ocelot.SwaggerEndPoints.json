@@ -1,0 +1,48 @@
+{
+  "SwaggerEndPoints": [
+    {
+      "Key": "APIGateway",
+      "TransformByOcelotConfig": false,
+      "Config": [
+        {
+          "Name": "APIGateway",
+          "Version": "1.0",
+          "Url": "https://localhost:7197/swagger/v1/swagger.json"
+        }
+      ]
+    },
+    {
+      "Key": "identity-service",
+      "TransformByOcelotConfig": false,
+      "Config": [
+        {
+          "Name": "IdentityService",
+          "Version": "1.0",
+          "Url": "https://localhost:7212/swagger/v1/swagger.json"
+        }
+      ]
+    },
+    {
+      "Key": "serviceA",
+      "TransformByOcelotConfig": true,
+      "Config": [
+        {
+          "Name": "MicroserviceDemo.ServiceA",
+          "Version": "1.0",
+          "Url": "http://localhost:5029/swagger/v1/swagger.json"
+        }
+      ]
+    },
+    {
+      "Key": "serviceB",
+      "TransformByOcelotConfig": true,
+      "Config": [
+        {
+          "Name": "MicroserviceDemo.ServiceB",
+          "Version": "1.0",
+          "Url": "http://localhost:5267/swagger/v1/swagger.json"
+        }
+      ]
+    }
+  ]
+}
