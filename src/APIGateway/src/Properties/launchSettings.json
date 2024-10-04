@@ -16,7 +16,9 @@
       "launchUrl": "swagger",
       "applicationUrl": "https://localhost:7197",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "OCELOT_SERVICE_DISCOVERY_HOST": "localhost",
+        "HOST_PORT_INSTANCE": "https://localhost:7197"
       }
     },
     "IIS Express": {

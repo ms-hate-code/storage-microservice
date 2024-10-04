@@ -16,5 +16,6 @@ public class MetadataContext
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
     }
     
-    public DbSet<Metadata.Models.Metadata> Metadatas { get; set; }
+    public DbSet<FileObject.Models.FileObject> FileObjects { get; set; }
+    public DbSet<FileFolder.Models.FileFolder> FileFolders { get; set; }
 }

@@ -7,7 +7,7 @@ namespace BuildingBlocks.Consul
 {
     public static class Extension
     {
-        public static void AddConsul(this IServiceCollection services)
+        public static IServiceCollection AddConsul(this IServiceCollection services)
         {
             var consulOptions = services.GetOptions<ConsulOptions>(nameof(ConsulOptions))
                 ?? throw new ArgumentNullException("Consul options are not configured");
@@ -20,8 +20,9 @@ namespace BuildingBlocks.Consul
             });
 
             services.AddSingleton<IConsulClient, ConsulClient>(_ => consulClient);
-            services.AddSingleton<IHostedService, ServiceDiscoveryRegistrationHostedService>();
+            services.AddSingleton<IHostedService, ConsulHostedService>();
 
+            return services;
         }
     }
 }

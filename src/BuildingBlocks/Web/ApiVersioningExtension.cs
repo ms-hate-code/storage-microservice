@@ -5,7 +5,7 @@ namespace BuildingBlocks.Web
 {
     public static class ApiVersioningExtension
     {
-        public static void AddCustomAPIVersioning(this IServiceCollection services,
+        public static IServiceCollection AddCustomAPIVersioning(this IServiceCollection services,
             Action<ApiVersioningOptions>? configurator = null)
         {
             services.AddApiVersioning(options =>
@@ -34,6 +34,8 @@ namespace BuildingBlocks.Web
                 options.SubstituteApiVersionInUrl = true;
             })
             .AddMvc();
+
+            return services;
         }
     }
 }

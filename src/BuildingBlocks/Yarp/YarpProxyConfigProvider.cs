@@ -1,4 +1,6 @@
-﻿using Consul;
+﻿using BuildingBlocks.Utils;
+using Consul;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Yarp.ReverseProxy.Configuration;
 using YarpDestinationConfig = Yarp.ReverseProxy.Configuration.DestinationConfig;
@@ -14,13 +16,19 @@ namespace BuildingBlocks.Yarp
         private readonly IEnumerable<IProxyConfigProvider> _providers;
         private readonly IConsulClient _consulClient;
         private readonly IOptionsMonitor<YarpServiceDiscoveryOptions> _options;
+        private readonly ILogger<YarpProxyConfigProvider> _logger;
 
-        public YarpProxyConfigProvider(IEnumerable<IProxyConfigProvider> providers,
-            IConsulClient consulClient, IOptionsMonitor<YarpServiceDiscoveryOptions> options)
+        public YarpProxyConfigProvider
+        (
+            IEnumerable<IProxyConfigProvider> providers,
+            IConsulClient consulClient, IOptionsMonitor<YarpServiceDiscoveryOptions> options, 
+            ILogger<YarpProxyConfigProvider> logger
+        )
         {
             _providers = providers;
             _consulClient = consulClient;
             _options = options;
+            _logger = logger;
 
 #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
             IntervalUpdate(_stoppingToken.Token);
@@ -42,18 +50,18 @@ namespace BuildingBlocks.Yarp
 
                 } while (!cancellationToken.IsCancellationRequested);
             }
-            catch
+            catch(Exception ex)
             {
-
+                _logger.LogError(ex, $"Has error = {ex.Message}");
             }
         }
 
         private async Task UpdateConfig(CancellationToken cancellationToken)
         {
-            List<ClusterConfig> clusterConfigs = new();
-            List<YarpRouteConfig> routes = new();
+            List<ClusterConfig> clusterConfigs = [];
+            List<YarpRouteConfig> routes = [];
 
-            foreach (IProxyConfigProvider provider in _providers)
+            foreach (var provider in _providers)
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -96,16 +104,16 @@ namespace BuildingBlocks.Yarp
         )
         {
             Dictionary<string, YarpDestinationConfig> destinations = new();
-            if (defaultClusterConfig is null)
+            if (defaultClusterConfig?.Destinations is null)
             {
                 return destinations;
             }
 
-            foreach (KeyValuePair<string, YarpDestinationConfig> destination in defaultClusterConfig.Destinations)
+            foreach (var destination in defaultClusterConfig.Destinations)
             {
-                string serviceName = destination.Value.Address;
+                var serviceName = destination.Value.Address;
 
-                AgentService service = discoveryServices.Values
+                var service = discoveryServices.Values
                                 .FirstOrDefault(s => s.Service.Equals(serviceName, StringComparison.OrdinalIgnoreCase));
 
                 if (service is null)
@@ -113,19 +121,19 @@ namespace BuildingBlocks.Yarp
                     continue;
                 }
 
-                string destinationName = service.ID;
+                var destinationName = service.ID;
 
-                bool hasHealthCheck = service.Meta.TryGetValue("HealthCheckEndPoint", out string healthCheckEndpoint);
-                bool hasScheme = service.Meta.TryGetValue("Scheme", out string scheme);
+                var hasHealthCheck = service.Meta.TryGetValue("HealthCheckEndPoint", out var healthCheckEndpoint);
+                var hasScheme = service.Meta.TryGetValue("Scheme", out var scheme);
 
                 if (!hasScheme)
                 {
                     continue;
                 }
 
-                string address = $"{scheme}://{service.Address}:{service.Port}";
+                var address = $"{scheme}://{service.Address}:{service.Port}";
 
-                destinations.Add(destinationName, new()
+                destinations.Add(destinationName, new YarpDestinationConfig
                 {
                     Address = address,
                     Health = healthCheckEndpoint,

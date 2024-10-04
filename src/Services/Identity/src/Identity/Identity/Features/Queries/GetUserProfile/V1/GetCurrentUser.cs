@@ -15,38 +15,38 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Logging;
 
-namespace Identity.Identity.Features.Queries.GetUserProfile.V1
+namespace Identity.Identity.Features.Queries.GetUserProfile.V1;
+
+public record GetUserProfileQuery(string UserId) : IQuery<GetUserProfileResult>, ICachingRequest
 {
-    public record GetUserProfileQuery(string UserId) : IQuery<GetUserProfileResult>, ICachingRequest
+    public string CacheKey { get; set; } = "IdentityService_CurrentUser";
+    public string HashField { get; set; } = UserId;
+    public TimeSpan ExpiredTime { get; set; }
+}
+
+public record GetUserProfileResult
+(
+    string Id,
+    string Email,
+    string PhoneNumber,
+    string FirstName,
+    string LastName
+);
+
+public record GetUserProfileResponseDto
+(
+    string Id,
+    string Email,
+    string PhoneNumber,
+    string FirstName,
+    string LastName
+);
+
+public class GetUserProfileEndpoint : IMinimalEndpoint
+{
+    public IEndpointRouteBuilder MapEndpoint(IEndpointRouteBuilder builder)
     {
-        public string CacheKey { get; set; } = "IdentityService_CurrentUser";
-        public string HashField { get; set; } = UserId;
-        public TimeSpan ExpiredTime { get; set; }
-    }
-
-    public record GetUserProfileResult
-    (
-        string Id,
-        string Email,
-        string PhoneNumber,
-        string FirstName,
-        string LastName
-    );
-
-    public record GetUserProfileResponseDto
-    (
-        string Id,
-        string Email,
-        string PhoneNumber,
-        string FirstName,
-        string LastName
-    );
-
-    public class GetUserProfileEndpoint : IMinimalEndpoint
-    {
-        public IEndpointRouteBuilder MapEndpoint(IEndpointRouteBuilder builder)
-        {
-            builder.MapGet($"{EndpointConfig.BaseAPIPath}/current-user-profile", async
+        builder.MapGet($"{EndpointConfig.BaseAPIPath}/current-user-profile", async
                 (ICurrentUserProvider _currentUserProvider, IMediator _mediator) =>
             {
                 var query = new GetUserProfileQuery(_currentUserProvider.GetUserId());
@@ -70,42 +70,41 @@ namespace Identity.Identity.Features.Queries.GetUserProfile.V1
             .HasApiVersion(1.0);
 
 
-            return builder;
-        }
+        return builder;
     }
+}
 
-    public class GetUserProfileValidator : AbstractValidator<GetUserProfileQuery>
+public class GetUserProfileValidator : AbstractValidator<GetUserProfileQuery>
+{
+    public GetUserProfileValidator()
     {
-        public GetUserProfileValidator()
-        {
-            RuleFor(x => x.UserId).NotEmpty();
-        }
+        RuleFor(x => x.UserId).NotEmpty();
     }
+}
 
-    public class GetCurrenUserQueryHandler
-    (
-        UserManager<AppUser> _userManager,
-        ILogger<GetCurrenUserQueryHandler> _logger
-    )
+public class GetCurrenUserQueryHandler
+(
+    UserManager<AppUser> _userManager,
+    ILogger<GetCurrenUserQueryHandler> _logger
+)
     : IQueryHandler<GetUserProfileQuery, GetUserProfileResult>
+{
+    public async Task<GetUserProfileResult> Handle(GetUserProfileQuery request, CancellationToken cancellationToken)
     {
-        public async Task<GetUserProfileResult> Handle(GetUserProfileQuery request, CancellationToken cancellationToken)
+        const string functionName = $"{nameof(GetCurrenUserQueryHandler)} =>";
+        try
         {
-            const string functionName = $"{nameof(GetCurrenUserQueryHandler)} =>";
-            try
-            {
-                _logger.LogInformation($"{functionName} Payload = {Helpers.JsonHelper.Serialize(request)}");
+            _logger.LogInformation($"{functionName} Payload = {Helpers.JsonHelper.Serialize(request)}");
                 
-                var user = await _userManager.FindByIdAsync(request.UserId)
-                    ?? throw new UserNotFoundException("Cannot find current user");
+            var user = await _userManager.FindByIdAsync(request.UserId)
+                       ?? throw new UserNotFoundException("Cannot find current user");
 
-                return user.Adapt<GetUserProfileResult>();
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, $"{functionName} Message = {e.Message}");
-                throw;
-            }
+            return user.Adapt<GetUserProfileResult>();
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, $"{functionName} Message = {e.Message}");
+            throw;
         }
     }
 }

@@ -4,6 +4,7 @@ using Consul;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Yarp.ReverseProxy.Configuration;
 
@@ -30,6 +31,7 @@ namespace BuildingBlocks.Yarp
 
 
             var proxyConfigProviders = serviceProvider.GetRequiredService<IEnumerable<IProxyConfigProvider>>();
+            var logger = serviceProvider.GetRequiredService<ILogger<YarpProxyConfigProvider>>();
 
             var consulClient = serviceProvider.GetRequiredService<IConsulClient>();
 
@@ -37,7 +39,7 @@ namespace BuildingBlocks.Yarp
 
             services.RemoveAll<IProxyConfigProvider>();
             services.AddSingleton<IProxyConfigProvider, YarpProxyConfigProvider>(_ =>
-                new YarpProxyConfigProvider(proxyConfigProviders, consulClient, options)
+                new YarpProxyConfigProvider(proxyConfigProviders, consulClient, options, logger)
             );
 
             return builder;
